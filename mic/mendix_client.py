@@ -48,12 +48,16 @@ class MendixClient:
         self.local_cache = r.json()
 
     # Request objects of a certain klass/type
-    def get_objects_by_klass(self, klass, limit=10):
+    def get_objects_by_klass(self, klass, limit=10, sort=None, offset=None):
         url = f"{self.base_url}/xas/"
         data = {
             "action": "retrieve_by_xpath",
             "params": {"xpath": f"//{klass}", "schema": {"amount": limit}},
         }
+        if offset:
+            data['params']['schema']['offset'] = offset
+        if sort:
+            data['params']['schema']['sort'] = sort
         r = self.session.post(url, json=data)
         return r.json().get("objects", {})
 
@@ -79,7 +83,10 @@ class MendixClient:
         r = self.session.post(url, json=data)
         return r.json().get("objects", {})
 
-    def download_file(self, guid, name, directory):      
+    def download_file(self, guid, name, directory):
+        destination_path = path.join(directory, f"{guid}_{name}")
+        if path.exists(destination_path):
+            return True
         url = f'{self.base_url}/file'
         params = {
             'guid': guid
@@ -88,7 +95,6 @@ class MendixClient:
         if not result.status_code == 200:
             return False
         else: 
-            destination_path = path.join(directory, f"{guid}_{name}")
             with open(destination_path, 'wb') as f:
                 f.write(result.content)
             return True
