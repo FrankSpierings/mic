@@ -14,7 +14,7 @@ commands:
     help                    Print this help
     !                       Find all the klasses
     ?                       Print 1 object of each klass
-    //<klass> [nr]          Find nr (default=1) of objects of the given klass: //System.User
+    //<klass> [nr] [offset] Find nr (default=1) of objects of the given klass: //System.User
     <guid>                  Find the object with the given guid: 281475001951441
     +<guid> <name> <value> Update attribute (name) for the given object
     login [<username>]      Login with the given username, or login as anonymous
@@ -44,8 +44,11 @@ def repl(client: MendixClient, downloads, credentials=None):
                 results = []
                 klass = ''
                 if len(splits) > 1 and splits[1].isdigit():
+                    offset = 0
+                    if len(splits) > 2 and splits[2].isdigit():
+                        offset = splits[2]
                     klass = splits[0][2:]
-                    results = client.get_objects_by_klass(klass, splits[1])
+                    results = client.get_objects_by_klass(klass, splits[1], offset=offset)
                 else:
                     klass = instruction[2:]
                     results = client.get_objects_by_klass(klass, 1)
@@ -70,12 +73,12 @@ def repl(client: MendixClient, downloads, credentials=None):
 
             # Retrieve all object klass types if input is !
             elif instruction == "!":
-                for klass in client.get_klasses():
+                for klass in sorted(client.get_klasses()):
                     print(f"//{klass}")
 
             # Retrieve 1 object for each class type if input is ?
             elif instruction == "?":    
-                for klass in client.get_klasses():
+                for klass in sorted(client.get_klasses()):
                     results = client.get_objects_by_klass(klass, 1)
                     if len(results) > 0:
                         pretty_print_objects(results)
